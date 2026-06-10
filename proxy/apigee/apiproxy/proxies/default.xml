@@ -1,0 +1,40 @@
+<ProxyEndpoint name="default">
+  <Description>End-user facing endpoint. No Google login required.</Description>
+  <HTTPProxyConnection>
+    <BasePath>/claude/v1</BasePath>
+  </HTTPProxyConnection>
+
+  <PreFlow name="PreFlow">
+    <Request>
+      <!-- Option A: API key (default for PoC). Swap to VJ-VerifyIdpToken for option C. -->
+      <Step><Name>VA-VerifyKey</Name></Step>
+      <Step><Name>SA-SmoothBurst</Name></Step>
+      <Step><Name>QU-PerAppDaily</Name></Step>
+      <Step><Name>AM-SetTarget</Name></Step>
+    </Request>
+    <Response/>
+  </PreFlow>
+
+  <Flows>
+    <Flow name="Messages">
+      <Description>Anthropic Messages API</Description>
+      <Condition>(proxy.pathsuffix MatchesPath "/messages") and (request.verb = "POST")</Condition>
+      <Request/>
+      <Response/>
+    </Flow>
+  </Flows>
+
+  <PostFlow name="PostFlow">
+    <Request/>
+    <Response>
+      <Step><Name>EV-Usage</Name></Step>
+      <Step><Name>AM-Scrub</Name></Step>
+      <Step><Name>SC-Tokens</Name></Step>
+      <Step><Name>ML-Audit</Name></Step>
+    </Response>
+  </PostFlow>
+
+  <RouteRule name="toClaude">
+    <TargetEndpoint>default</TargetEndpoint>
+  </RouteRule>
+</ProxyEndpoint>

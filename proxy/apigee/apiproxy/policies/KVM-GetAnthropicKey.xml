@@ -1,0 +1,8 @@
+<KeyValueMapOperations name="KVM-GetAnthropicKey" mapIdentifier="secrets">
+  <DisplayName>Read Anthropic key from encrypted KVM</DisplayName>
+  <!-- 'secrets' is an encrypted KVM. The value is written once via the Apigee API, never in source. -->
+  <Scope>environment</Scope>
+  <Get assignTo="private.anthropic.key" index="1">
+    <Key><Parameter>anthropic_api_key</Parameter></Key>
+  </Get>
+</KeyValueMapOperations>

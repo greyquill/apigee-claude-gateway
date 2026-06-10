@@ -1,0 +1,12 @@
+<VerifyJWT name="VJ-VerifyIdpToken">
+  <DisplayName>Verify customer-IdP JWT (option C: non-Google federation)</DisplayName>
+  <!-- Validates a JWT minted by the customer's own IdP (Okta/Entra/Auth0). Zero Google identity.
+       Enable this instead of VA-VerifyKey when demonstrating federation. -->
+  <Algorithm>RS256</Algorithm>
+  <Source>request.header.authorization.bearer</Source>
+  <PublicKey>
+    <JWKS uri="https://CUSTOMER_IDP/.well-known/jwks.json"/>
+  </PublicKey>
+  <Issuer>https://CUSTOMER_IDP/</Issuer>
+  <Audience>claude-gateway</Audience>
+</VerifyJWT>

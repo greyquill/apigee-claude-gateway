@@ -1,0 +1,10 @@
+<APIProxy revision="1" name="claude-gateway">
+  <DisplayName>Claude Governance Gateway</DisplayName>
+  <Description>Fronts the Claude API. Non-Google end-user auth, backend key injection, quota, spike arrest, audit. PoC.</Description>
+  <ProxyEndpoints>
+    <ProxyEndpoint>default</ProxyEndpoint>
+  </ProxyEndpoints>
+  <TargetEndpoints>
+    <TargetEndpoint>default</TargetEndpoint>
+  </TargetEndpoints>
+</APIProxy>

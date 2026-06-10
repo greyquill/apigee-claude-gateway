@@ -1,0 +1,9 @@
+<StatisticsCollector name="SC-Tokens">
+  <DisplayName>Record token usage into Analytics</DisplayName>
+  <Statistics>
+    <Statistic name="input_tokens" ref="claude.usage.input_tokens" type="integer">0</Statistic>
+    <Statistic name="output_tokens" ref="claude.usage.output_tokens" type="integer">0</Statistic>
+    <Statistic name="model" ref="claude.usage.model" type="string">unknown</Statistic>
+    <Statistic name="app" ref="verifyapikey.VA-VerifyKey.app.name" type="string">unknown</Statistic>
+  </Statistics>
+</StatisticsCollector>

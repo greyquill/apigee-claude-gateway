@@ -1,0 +1,17 @@
+<AssignMessage name="AM-InjectBackendAuth">
+  <DisplayName>Inject Anthropic key, strip client credential</DisplayName>
+  <!-- Backend leg only. The user's credential is NOT forwarded; the Anthropic key is added here. -->
+  <Set>
+    <Headers>
+      <Header name="x-api-key">{private.anthropic.key}</Header>
+      <Header name="anthropic-version">2023-06-01</Header>
+    </Headers>
+  </Set>
+  <Remove>
+    <Headers>
+      <Header name="x-app-key"/>
+      <Header name="Authorization"/>
+    </Headers>
+  </Remove>
+  <IgnoreUnresolvedVariables>false</IgnoreUnresolvedVariables>
+</AssignMessage>

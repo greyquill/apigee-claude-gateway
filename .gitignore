@@ -1,0 +1,14 @@
+# Secrets — never commit
+.env
+.env.*
+*.key
+*.pem
+secrets.*
+service-account*.json
+
+# Build / tooling
+node_modules/
+*.zip
+.DS_Store
+__pycache__/
+*.log

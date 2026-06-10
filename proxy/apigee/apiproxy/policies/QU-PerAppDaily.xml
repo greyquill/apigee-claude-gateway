@@ -1,0 +1,10 @@
+<Quota name="QU-PerAppDaily">
+  <DisplayName>Per-app daily quota</DisplayName>
+  <!-- Allow override per Developer App via a custom attribute 'quota_limit'; default 1000/day. -->
+  <Allow countRef="verifyapikey.VA-VerifyKey.app.quota_limit" count="1000"/>
+  <Interval>1</Interval>
+  <TimeUnit>day</TimeUnit>
+  <Identifier ref="client_id"/>
+  <Distributed>true</Distributed>
+  <Synchronous>true</Synchronous>
+</Quota>

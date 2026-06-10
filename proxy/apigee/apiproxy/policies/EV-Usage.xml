@@ -1,0 +1,11 @@
+<ExtractVariables name="EV-Usage">
+  <DisplayName>Extract token usage from Claude response</DisplayName>
+  <Source>response</Source>
+  <JSONPayload>
+    <Variable name="usage.input_tokens"><JSONPath>$.usage.input_tokens</JSONPath></Variable>
+    <Variable name="usage.output_tokens"><JSONPath>$.usage.output_tokens</JSONPath></Variable>
+    <Variable name="usage.model"><JSONPath>$.model</JSONPath></Variable>
+  </JSONPayload>
+  <VariablePrefix>claude</VariablePrefix>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</ExtractVariables>

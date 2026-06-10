@@ -1,0 +1,5 @@
+<VerifyAPIKey name="VA-VerifyKey">
+  <DisplayName>Verify API key (non-Google end-user identity)</DisplayName>
+  <!-- End-user passes their Apigee-issued key. No Google login involved. -->
+  <APIKey ref="request.header.x-app-key"/>
+</VerifyAPIKey>

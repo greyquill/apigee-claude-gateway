@@ -1,0 +1,5 @@
+<SpikeArrest name="SA-SmoothBurst">
+  <DisplayName>Spike arrest</DisplayName>
+  <Rate>30ps</Rate>
+  <UseEffectiveCount>true</UseEffectiveCount>
+</SpikeArrest>

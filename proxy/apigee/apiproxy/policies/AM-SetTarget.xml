@@ -1,0 +1,15 @@
+<AssignMessage name="AM-SetTarget">
+  <DisplayName>Set target path + correlation id</DisplayName>
+  <AssignVariable>
+    <Name>target.copy.pathsuffix</Name>
+    <Value>false</Value>
+  </AssignVariable>
+  <Set>
+    <Path>/messages</Path>
+    <Headers>
+      <Header name="X-Request-Id">{messageid}</Header>
+      <Header name="Content-Type">application/json</Header>
+    </Headers>
+  </Set>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</AssignMessage>
