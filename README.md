@@ -25,7 +25,9 @@ audit record for every call.
 | `CONTRIBUTING.md` | How to work in this repo (conventions, the hard rules). |
 
 ## Live explainer
-Hosted on GitHub Pages: **https://greyquill.github.io/apigee-claude-gateway/**
+Hosted on GitHub Pages (both URLs serve the same page):
+- **https://www.greyquill.io/apigee-claude-gateway/** (custom domain)
+- https://greyquill.github.io/apigee-claude-gateway/
 
 ## Quick mental model
 ```
