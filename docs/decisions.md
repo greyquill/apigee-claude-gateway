@@ -1,9 +1,8 @@
 # Decision log (ADRs) + open questions
 
-Lightweight records. One entry per decision: context, decision, status. Open questions are the
-agenda for the 2026-06-10 16:00 IST brainstorm.
+Lightweight records. One entry per decision: context, decision, status.
 
-## Open questions (resolve at the 4pm)
+## Open questions
 1. **Backend Claude surface** — Anthropic API direct vs. Claude on Vertex AI vs. Claude on
    AWS Bedrock? Gates target endpoint + backend auth. (Leaning: Anthropic direct for PoC speed,
    designed so Vertex is a config swap.)
@@ -30,5 +29,5 @@ agenda for the 2026-06-10 16:00 IST brainstorm.
 
 ## ADR-0003 — Backend target (PENDING)
 - **Context:** see open question 1.
-- **Decision:** TBD at the 4pm.
+- **Decision:** TBD.
 - **Status:** proposed — Anthropic API direct for PoC, Vertex as the swap-in narrative.

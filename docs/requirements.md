@@ -1,10 +1,10 @@
 # Requirements
 
 ## Context
-A contact at Google handed Amar a problem: Apigee customers need their end-users to consume
-Claude (Anthropic) services that sit behind Apigee, **without** logging into anything Google
-(Workspace or Cloud Console), while Apigee enforces policy, meters usage, and audits every call.
-Deliverable: a working proof of concept that demonstrates the mechanism.
+Apigee customers need their end-users to consume Claude (Anthropic) services that sit behind
+Apigee, **without** logging into anything Google (Workspace or Cloud Console), while Apigee
+enforces policy, meters usage, and audits every call. Deliverable: a working proof of concept
+that demonstrates the mechanism.
 
 ## In scope (PoC)
 - One Apigee API proxy that fronts the Claude API.
