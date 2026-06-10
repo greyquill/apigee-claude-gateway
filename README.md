@@ -16,6 +16,7 @@ audit record for every call.
 ## What this repo holds
 | Path | What |
 |---|---|
+| `docs/explainer.html` | **Visual explainer** — architecture, status, requirements, and live-deployment needs in one page. Open in a browser. |
 | `docs/poc-architecture.md` | **The one-page PoC architecture** (proxy flow + the specific Apigee policies). Start here. |
 | `docs/requirements.md` | Functional + non-functional requirements, scope, and success criteria. |
 | `docs/decisions.md` | Decision log (ADRs). Open questions to resolve at the 4pm. |

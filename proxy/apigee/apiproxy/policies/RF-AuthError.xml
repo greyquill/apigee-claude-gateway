@@ -1,0 +1,10 @@
+<RaiseFault name="RF-AuthError">
+  <DisplayName>Clean auth error</DisplayName>
+  <FaultResponse>
+    <Set>
+      <StatusCode>401</StatusCode>
+      <ReasonPhrase>Unauthorized</ReasonPhrase>
+      <Payload contentType="application/json">{"error":{"type":"unauthorized","message":"A valid non-Google credential is required (Apigee API key in x-app-key, or a customer-IdP Bearer token)."}}</Payload>
+    </Set>
+  </FaultResponse>
+</RaiseFault>

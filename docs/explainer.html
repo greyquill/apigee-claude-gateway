@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apigee → Claude Governance Gateway — PoC Explainer</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c2230; --ink:#e6edf3; --muted:#9aa7b4;
+    --line:#2a313c; --accent:#6ea8fe; --accent2:#7ee787; --warn:#f0b429; --danger:#ff7b72;
+    --green:#2ea043; --grey:#6e7681; --chip:#21262d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 22px 80px}
+  header.hero{border:1px solid var(--line);background:linear-gradient(160deg,#161b22,#10141b);
+    border-radius:16px;padding:28px 30px;margin-bottom:26px}
+  h1{font-size:26px;margin:0 0 6px;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 16px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:4px 12px;font-size:12.5px;color:var(--muted)}
+  .chip b{color:var(--ink);font-weight:600}
+  h2{font-size:19px;margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  h3{font-size:15.5px;margin:20px 0 8px;color:var(--accent)}
+  p{margin:0 0 12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .callout{border-left:3px solid var(--accent);background:var(--panel2);border-radius:8px;padding:12px 16px;margin:14px 0}
+  .callout.warn{border-left-color:var(--warn)}
+  .callout.danger{border-left-color:var(--danger)}
+  .callout.good{border-left-color:var(--green)}
+  code{background:#0b0e13;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:13px;
+    font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;color:#cdd9e5}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;font-size:11px;font-weight:700;border-radius:5px;padding:2px 8px;letter-spacing:.3px}
+  .b-done{background:rgba(46,160,67,.18);color:#56d364;border:1px solid rgba(46,160,67,.4)}
+  .b-pend{background:rgba(240,180,41,.15);color:#e3b341;border:1px solid rgba(240,180,41,.4)}
+  .b-todo{background:rgba(110,118,129,.15);color:#9aa7b4;border:1px solid rgba(110,118,129,.4)}
+  .b-need{background:rgba(110,168,254,.15);color:#79b8ff;border:1px solid rgba(110,168,254,.4)}
+  /* flow diagram */
+  .flow{display:flex;flex-direction:column;gap:0;margin:16px 0}
+  .node{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+  .node .t{font-weight:700;margin-bottom:3px}
+  .node .d{color:var(--muted);font-size:12.5px}
+  .node.user{border-color:#3b557a}
+  .node.gw{border-color:var(--accent)}
+  .node.backend{border-color:var(--accent2)}
+  .node.audit{border-color:var(--warn)}
+  .arrow{align-self:center;color:var(--muted);font-size:20px;line-height:1;margin:6px 0}
+  .pol{margin:6px 0 0;padding-left:18px}
+  .pol li{margin:3px 0;font-size:13px;color:var(--muted)}
+  .pol li b{color:var(--ink)}
+  ul.tight{margin:6px 0;padding-left:20px}
+  ul.tight li{margin:4px 0}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .small{font-size:12.5px;color:var(--muted)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 0}
+  .legend span{font-size:12px;color:var(--muted)}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  @media(max-width:760px){.grid2,.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Apigee → Claude Governance Gateway</h1>
+    <p class="sub">A proof of concept: end-users reach Claude (Anthropic) through Apigee with <b>no Google login</b>, while Apigee enforces policy, meters usage, and audits every call.</p>
+    <div class="meta">
+      <span class="chip">Status: <b>PoC scaffold — pre-deployment</b></span>
+      <span class="chip">Repo: <b>~/code/apigee-claude-gateway</b></span>
+      <span class="chip">Source: <b>problem from a Google contact</b></span>
+      <span class="chip">Review: <b>pending Amar</b></span>
+      <span class="chip">Date: <b>2026-06-10</b></span>
+    </div>
+  </header>
+
+  <!-- PROBLEM -->
+  <h2>1. The problem in one line</h2>
+  <div class="card">
+    <p>Apigee customers want their end-users to consume Claude services and runtimes that sit <b>behind Apigee</b>, <b>without logging into anything Google</b> (Google Workspace or the Cloud Console). Apigee stays the governance layer it always is: policy enforcement, usage metering, and full audit. Everything is tracked, and the real Anthropic credential never leaves Apigee.</p>
+    <div class="callout">
+      <b>The test the design must pass:</b> a user holding only a non-Google credential calls an Apigee endpoint and gets a Claude answer; the Anthropic key is invisible to that user; and there is a governed audit record for the call.
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <h2>2. Architecture &amp; proxy flow</h2>
+  <div class="card">
+    <div class="flow">
+      <div class="node user">
+        <div class="t">End-user / app</div>
+        <div class="d">Holds a <b>non-Google</b> credential: an Apigee API key <code>x-app-key</code>, OR a customer-IdP Bearer JWT. No Workspace / Cloud Console login anywhere.</div>
+      </div>
+      <div class="arrow">▼ &nbsp; POST /claude/v1/messages</div>
+      <div class="node gw">
+        <div class="t">Apigee API proxy &nbsp;<span class="small">(the single front door + system of record)</span></div>
+        <div class="d"><b>Request PreFlow:</b></div>
+        <ol class="pol">
+          <li><b>VJ-VerifyIdpToken</b> — verify customer-IdP JWT &nbsp;<span class="small">(if Bearer present)</span></li>
+          <li><b>VA-VerifyKey</b> — verify Apigee API key &nbsp;<span class="small">(otherwise)</span></li>
+          <li><b>AM-PrincipalFrom{Jwt|Key}</b> — resolve one uniform <code>gw.principal</code></li>
+          <li><b>SA-SmoothBurst</b> — spike arrest</li>
+          <li><b>QU-PerAppDaily</b> — per-principal quota</li>
+          <li><b>AM-SetTarget</b> — route + correlation id</li>
+        </ol>
+      </div>
+      <div class="arrow">▼ &nbsp; backend leg (key injected here, hidden from user)</div>
+      <div class="node gw" style="border-style:dashed">
+        <div class="t">Target PreFlow — secret injection</div>
+        <ol class="pol">
+          <li><b>KVM-GetAnthropicKey</b> — read Anthropic key from <b>encrypted KVM</b></li>
+          <li><b>AM-InjectBackendAuth</b> — set <code>x-api-key</code> + <code>anthropic-version</code>; <b>strip</b> the user's credential</li>
+        </ol>
+      </div>
+      <div class="arrow">▼</div>
+      <div class="node backend">
+        <div class="t">Claude backend</div>
+        <div class="d">PoC: Anthropic API direct (<code>api.anthropic.com</code>). Designed so swapping to <b>Claude on Vertex AI</b> or <b>Bedrock</b> is a config change. <span class="small">(Decision pending — see §7.)</span></div>
+      </div>
+      <div class="arrow">▼ &nbsp; response</div>
+      <div class="node gw">
+        <div class="t">Response PostFlow</div>
+        <ol class="pol">
+          <li><b>EV-Usage</b> — extract input/output tokens + model</li>
+          <li><b>AM-Scrub</b> — strip backend/debug headers</li>
+          <li><b>SC-Tokens</b> — meter tokens into Analytics</li>
+          <li><b>ML-Audit</b> — structured audit line → Cloud Logging</li>
+        </ol>
+      </div>
+      <div class="arrow">▼</div>
+      <div class="node audit">
+        <div class="t">Audit &amp; usage of record</div>
+        <div class="d">Apigee Analytics + an external sink (BigQuery / SIEM): principal, auth method, request id, model, token counts, status, timestamp. <b>No secrets ever logged.</b></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span>🟦 end-user</span><span>🟦 Apigee policy stages</span><span>🟩 Claude backend</span><span>🟧 audit sink</span>
+    </div>
+  </div>
+
+  <!-- IDENTITY -->
+  <h2>3. Identity model — how "no Google login" works</h2>
+  <div class="card">
+    <p>End-user identity is established by an <b>Apigee</b> construct, never by Google. The only place a Google identity could appear is the <i>backend</i> leg if Claude is reached via Vertex AI, and that is a hidden <b>service</b> identity inside Apigee, invisible to the end-user.</p>
+    <table>
+      <tr><th>Option</th><th>End-user holds</th><th>Apigee verifies with</th><th>Status</th></tr>
+      <tr><td><b>A. Apigee API key</b></td><td>API key tied to an Apigee Developer App</td><td><code>VerifyAPIKey</code></td><td><span class="badge b-done">WIRED</span></td></tr>
+      <tr><td><b>C. Customer-IdP JWT</b></td><td>JWT from the customer's own Okta / Entra ID / Auth0</td><td><code>VerifyJWT</code> (JWKS)</td><td><span class="badge b-done">WIRED</span></td></tr>
+      <tr><td><b>B. Apigee OAuth2</b></td><td>short-lived token from Apigee's token endpoint</td><td><code>OAuthV2</code></td><td><span class="badge b-todo">OPTIONAL</span></td></tr>
+    </table>
+    <div class="callout good">
+      <b>Both A and C are wired in the bundle.</b> The proxy does conditional auth: a request with <code>Authorization: Bearer …</code> is verified as a customer-IdP JWT; otherwise the <code>x-app-key</code> API key is verified. Both paths resolve a single <code>gw.principal</code> (<code>sub</code> or <code>client_id</code>), so quota, metering, and audit are identical no matter how the user authenticated. The IdP issuer/JWKS/audience come from <code>resources/properties/idp.properties</code> so the same bundle points at any customer IdP by config, not code.
+    </div>
+  </div>
+
+  <!-- POLICIES -->
+  <h2>4. The specific Apigee policies</h2>
+  <div class="card">
+    <table>
+      <tr><th>Policy file</th><th>Type</th><th>Does</th></tr>
+      <tr><td><code>VJ-VerifyIdpToken</code></td><td>VerifyJWT</td><td>Validate customer-IdP JWT (RS256, JWKS, iss/aud/exp). Option C.</td></tr>
+      <tr><td><code>VA-VerifyKey</code></td><td>VerifyAPIKey</td><td>Validate Apigee API key, load app/tier context. Option A.</td></tr>
+      <tr><td><code>AM-PrincipalFromJwt / …Key</code></td><td>AssignMessage</td><td>Resolve a uniform <code>gw.principal</code> + <code>gw.tier</code> + <code>gw.auth_method</code>.</td></tr>
+      <tr><td><code>SA-SmoothBurst</code></td><td>SpikeArrest</td><td>Smooth bursts (30/s) to protect the backend.</td></tr>
+      <tr><td><code>QU-PerAppDaily</code></td><td>Quota</td><td>Per-principal daily budget (default 1000/day); 429 when exceeded.</td></tr>
+      <tr><td><code>AM-SetTarget</code></td><td>AssignMessage</td><td>Set backend path + <code>X-Request-Id</code> correlation id.</td></tr>
+      <tr><td><code>KVM-GetAnthropicKey</code></td><td>KeyValueMapOperations</td><td>Read Anthropic key from an <b>encrypted</b> KVM.</td></tr>
+      <tr><td><code>AM-InjectBackendAuth</code></td><td>AssignMessage</td><td>Inject <code>x-api-key</code> on backend leg; strip the user's credential.</td></tr>
+      <tr><td><code>EV-Usage</code></td><td>ExtractVariables</td><td>Pull input/output token counts + model from the response.</td></tr>
+      <tr><td><code>AM-Scrub</code></td><td>AssignMessage</td><td>Strip backend/debug headers before returning to the user.</td></tr>
+      <tr><td><code>SC-Tokens</code></td><td>StatisticsCollector</td><td>Record tokens, principal, auth method, tier into Analytics.</td></tr>
+      <tr><td><code>ML-Audit</code></td><td>MessageLogging</td><td>Structured audit line → Cloud Logging → BigQuery/SIEM.</td></tr>
+      <tr><td><code>RF-AuthError</code></td><td>RaiseFault</td><td>Clean 401 JSON on any auth failure (DefaultFaultRule).</td></tr>
+    </table>
+    <div class="callout danger">
+      <b>Secret handling (the crux):</b> the Anthropic key lives once in an encrypted KVM, is injected <b>only</b> on the backend leg, and never appears in any user-visible response, header, or log. End-user credentials and the backend credential are fully decoupled.
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <h2>5. Status — what's done vs. pending</h2>
+  <div class="card">
+    <table>
+      <tr><th>Item</th><th>State</th></tr>
+      <tr><td>Repo + git, docs (architecture / requirements / decisions)</td><td><span class="badge b-done">DONE</span></td></tr>
+      <tr><td>Deployable Apigee proxy bundle (proxy + target + 13 policies)</td><td><span class="badge b-done">DONE</span></td></tr>
+      <tr><td>Option A (API key) auth path</td><td><span class="badge b-done">DONE</span></td></tr>
+      <tr><td>Option C (customer-IdP JWT) auth path, config-driven</td><td><span class="badge b-done">DONE</span></td></tr>
+      <tr><td>Unified principal → quota / metering / audit for both paths</td><td><span class="badge b-done">DONE</span></td></tr>
+      <tr><td>Deploy + dual-path test scripts</td><td><span class="badge b-done">DONE</span></td></tr>
+      <tr><td>Backend target decision (Anthropic direct vs. Vertex vs. Bedrock)</td><td><span class="badge b-pend">DECIDE @ 4PM</span></td></tr>
+      <tr><td>Live deploy to an Apigee org + first real call</td><td><span class="badge b-need">NEEDS ENV</span></td></tr>
+      <tr><td>BigQuery/SIEM audit sink wiring</td><td><span class="badge b-todo">NEXT</span></td></tr>
+      <tr><td>Streaming (SSE) metering exactness</td><td><span class="badge b-todo">FOLLOW-UP</span></td></tr>
+      <tr><td>Architecture review</td><td><span class="badge b-pend">PENDING AMAR</span></td></tr>
+    </table>
+    <p class="small">Honest note: the bundle is a reviewable, convention-correct skeleton. It has <b>not</b> been deployed or run against a live Apigee org yet, so expect to iterate on exact variable refs / fault names on first deploy.</p>
+  </div>
+
+  <!-- REQUIREMENTS -->
+  <h2>6. Requirements</h2>
+  <div class="two">
+    <div class="card">
+      <h3>Functional</h3>
+      <ul class="tight">
+        <li><b>FR1</b> Non-Google credential → Apigee → valid Claude response.</li>
+        <li><b>FR2</b> Missing/invalid credential rejected at Apigee (401), backend never hit.</li>
+        <li><b>FR3</b> Anthropic key injected from secure storage; never user-visible.</li>
+        <li><b>FR4</b> Per-principal/tier quota; 429 on exceed.</li>
+        <li><b>FR5</b> Spike arrest protects backend.</li>
+        <li><b>FR6</b> Every call → audit record (identity, request id, model, tokens, status, ts).</li>
+        <li><b>FR7</b> Token usage extracted + metered.</li>
+        <li><b>FR8</b> Faults return clean, governed errors.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Non-functional</h3>
+      <ul class="tight">
+        <li><b>NFR1 Security</b> — no Google login in user path; secrets only encrypted; client credential never forwarded upstream.</li>
+        <li><b>NFR2 Observability</b> — every allow/deny/quota/cost decision queryable.</li>
+        <li><b>NFR3 Portability</b> — backend target is a config swap, not a rewrite.</li>
+        <li><b>NFR4 Repeatability</b> — bundle deploys from repo via script; demo reproducible.</li>
+        <li><b>NFR5 Cost control</b> — eval tier + low token caps; no surprise spend.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- DEPLOYMENT NEEDS -->
+  <h2>7. What I need for a live deployment (dev environment)</h2>
+  <div class="card">
+    <p>The scaffold is complete; turning it into a running demo needs the following. None of these are secrets in the repo, they are provisioned into Apigee / your shell.</p>
+    <table>
+      <tr><th>Need</th><th>Why / how</th></tr>
+      <tr><td><span class="badge b-need">Apigee org + env</span></td><td>An Apigee X <b>eval org</b> is enough. Gives the runtime, a hostname, and Analytics. Set <code>APIGEE_ORG</code> / <code>APIGEE_ENV</code>.</td></tr>
+      <tr><td><span class="badge b-need">gcloud + apigeecli</span></td><td>Local tooling to import + deploy the bundle and seed the KVM. <code>scripts/deploy.sh</code> uses both.</td></tr>
+      <tr><td><span class="badge b-need">Anthropic API key</span></td><td>The backend credential. Set <code>ANTHROPIC_API_KEY</code> in your shell; the deploy script writes it into the encrypted KVM <code>secrets</code>. Never committed. <i>(For Vertex/Bedrock targets this becomes a service-account / SigV4 setup instead.)</i></td></tr>
+      <tr><td><span class="badge b-need">A Developer + App + API product</span></td><td>Apigee product bound to the proxy, an app under a developer → yields the <b>API key</b> for option A and feeds quota/analytics.</td></tr>
+      <tr><td><span class="badge b-need">A non-Google IdP (option C)</span></td><td>Any dev tenant — Okta / Entra ID / Auth0 / Keycloak. Put its <code>issuer</code>, <code>jwks_uri</code>, <code>audience</code> in <code>resources/properties/idp.properties</code>. Used to mint a test JWT.</td></tr>
+      <tr><td><span class="badge b-todo">BigQuery dataset (optional)</span></td><td>Cloud Logging sink → BigQuery for the durable audit trail. Optional for a first demo (Analytics alone proves governance).</td></tr>
+    </table>
+    <div class="callout warn">
+      <b>Decision that gates deploy:</b> which Claude backend — <b>Anthropic API direct</b> (simplest, zero Google), <b>Claude on Vertex AI</b> (strongest story for a Google audience), or <b>Bedrock</b> (cross-cloud). The bundle defaults to Anthropic-direct, target designed for a one-line swap.
+    </div>
+    <h3>From zero to a governed call</h3>
+    <ul class="tight">
+      <li><code>export APIGEE_ORG=… APIGEE_ENV=eval ANTHROPIC_API_KEY=sk-ant-…</code></li>
+      <li><code>./scripts/deploy.sh</code> &nbsp;<span class="small">(seeds KVM, imports + deploys the bundle)</span></li>
+      <li>create an API product + developer app → copy the API key</li>
+      <li><code>GATEWAY_HOST=… APP_KEY=… IDP_JWT=… ./scripts/test-call.sh</code></li>
+      <li>open Apigee Analytics → confirm the governed call + token metering</li>
+    </ul>
+  </div>
+
+  <!-- OPEN QUESTIONS -->
+  <h2>8. Open questions for the 4pm</h2>
+  <div class="card">
+    <ul class="tight">
+      <li><b>Backend Claude surface</b> — Anthropic direct vs. Vertex AI vs. Bedrock.</li>
+      <li><b>Identity</b> — lead the demo with API key (A), JWT (C), or both?</li>
+      <li><b>Audit depth</b> — metadata only, or capture prompt/response bodies? Where does the sink live? PII / data-residency constraints?</li>
+      <li><b>Cost attribution</b> — per-app, per-end-user, or per-tier?</li>
+      <li><b>Streaming</b> — is SSE required for the demo?</li>
+      <li><b>Tenancy</b> — one shared proxy or per-customer proxy/environment?</li>
+    </ul>
+  </div>
+
+  <footer>
+    Apigee → Claude Governance Gateway · PoC scaffold, pre-deployment · prepared for architecture review.<br>
+    Full detail in <code>docs/poc-architecture.md</code>, <code>docs/requirements.md</code>, <code>docs/decisions.md</code>. Deployable bundle in <code>proxy/apigee/</code>.
+  </footer>
+
+</div>
+</body>
+</html>

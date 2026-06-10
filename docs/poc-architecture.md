@@ -57,6 +57,13 @@ to the end-user.
 **PoC recommendation:** build **A** end-to-end first (fastest path to a working demo), then add
 **C** to prove federation to a non-Google IdP. B is optional.
 
+**Wired in the bundle (A + C):** the proxy does conditional auth in the PreFlow. If the caller
+sends an `Authorization: Bearer` token it is verified as a customer-IdP JWT (`VJ-VerifyIdpToken`,
+configured by `resources/properties/idp.properties`); otherwise an Apigee API key in `x-app-key`
+is verified (`VA-VerifyKey`). Both paths then resolve a single `gw.principal` (JWT `sub` or API-key
+`client_id`) via `AM-PrincipalFromJwt` / `AM-PrincipalFromKey`, so quota, usage metering, and audit
+are identical regardless of auth method. Neither end-user credential is forwarded upstream.
+
 ---
 
 ## 3. The specific Apigee policies

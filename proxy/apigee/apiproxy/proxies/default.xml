@@ -6,8 +6,25 @@
 
   <PreFlow name="PreFlow">
     <Request>
-      <!-- Option A: API key (default for PoC). Swap to VJ-VerifyIdpToken for option C. -->
-      <Step><Name>VA-VerifyKey</Name></Step>
+      <!-- Dual non-Google auth. If the caller sends a Bearer token, verify it as a
+           customer-IdP JWT (option C); otherwise expect an Apigee API key (option A).
+           Either way: no Google login in the end-user path. -->
+      <Step>
+        <Name>VJ-VerifyIdpToken</Name>
+        <Condition>request.header.authorization != null</Condition>
+      </Step>
+      <Step>
+        <Name>AM-PrincipalFromJwt</Name>
+        <Condition>request.header.authorization != null</Condition>
+      </Step>
+      <Step>
+        <Name>VA-VerifyKey</Name>
+        <Condition>request.header.authorization = null</Condition>
+      </Step>
+      <Step>
+        <Name>AM-PrincipalFromKey</Name>
+        <Condition>request.header.authorization = null</Condition>
+      </Step>
       <Step><Name>SA-SmoothBurst</Name></Step>
       <Step><Name>QU-PerAppDaily</Name></Step>
       <Step><Name>AM-SetTarget</Name></Step>
@@ -37,4 +54,12 @@
   <RouteRule name="toClaude">
     <TargetEndpoint>default</TargetEndpoint>
   </RouteRule>
+
+  <DefaultFaultRule name="default-fault">
+    <Step>
+      <Name>RF-AuthError</Name>
+      <Condition>(fault.name = "InvalidApiKey") or (fault.name = "InvalidApiKeyForGivenResource") or (fault.name = "FailedToResolveAPIKey") or (fault.name Matches "*JWT*") or (fault.name = "InvalidToken")</Condition>
+    </Step>
+    <AlwaysEnforce>true</AlwaysEnforce>
+  </DefaultFaultRule>
 </ProxyEndpoint>

@@ -1,10 +1,11 @@
 <Quota name="QU-PerAppDaily">
-  <DisplayName>Per-app daily quota</DisplayName>
-  <!-- Allow override per Developer App via a custom attribute 'quota_limit'; default 1000/day. -->
-  <Allow countRef="verifyapikey.VA-VerifyKey.app.quota_limit" count="1000"/>
+  <DisplayName>Per-principal daily quota</DisplayName>
+  <!-- Keyed on the unified principal (API-key client_id OR JWT subject) so quota works for
+       both auth paths. Per-tier override via the 'gw.tier'-driven attribute; default 1000/day. -->
+  <Allow count="1000"/>
   <Interval>1</Interval>
   <TimeUnit>day</TimeUnit>
-  <Identifier ref="client_id"/>
+  <Identifier ref="gw.principal"/>
   <Distributed>true</Distributed>
   <Synchronous>true</Synchronous>
 </Quota>

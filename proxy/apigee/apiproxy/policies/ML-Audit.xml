@@ -7,8 +7,10 @@
     <Message contentType="application/json">{
       "ts": "{system.timestamp}",
       "request_id": "{messageid}",
-      "app": "{verifyapikey.VA-VerifyKey.app.name}",
-      "developer": "{verifyapikey.VA-VerifyKey.developer.email}",
+      "principal": "{gw.principal}",
+      "auth_method": "{gw.auth_method}",
+      "issuer": "{gw.issuer}",
+      "tier": "{gw.tier}",
       "model": "{claude.usage.model}",
       "input_tokens": "{claude.usage.input_tokens}",
       "output_tokens": "{claude.usage.output_tokens}",

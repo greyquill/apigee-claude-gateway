@@ -1,0 +1,10 @@
+<AssignMessage name="AM-PrincipalFromJwt">
+  <DisplayName>Set principal from JWT (option C)</DisplayName>
+  <!-- Runs only when a JWT was verified. Establishes a uniform principal used by quota + audit
+       so the rest of the proxy does not care which auth method was used. -->
+  <AssignVariable><Name>gw.principal</Name><Ref>jwt.VJ-VerifyIdpToken.decoded.claim.sub</Ref><Value>unknown</Value></AssignVariable>
+  <AssignVariable><Name>gw.tier</Name><Ref>jwt.VJ-VerifyIdpToken.decoded.claim.tier</Ref><Value>default</Value></AssignVariable>
+  <AssignVariable><Name>gw.auth_method</Name><Value>idp-jwt</Value></AssignVariable>
+  <AssignVariable><Name>gw.issuer</Name><Ref>jwt.VJ-VerifyIdpToken.decoded.claim.iss</Ref><Value>unknown</Value></AssignVariable>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</AssignMessage>

@@ -1,0 +1,9 @@
+<AssignMessage name="AM-PrincipalFromKey">
+  <DisplayName>Set principal from API key (option A)</DisplayName>
+  <!-- Runs only when an API key was verified. Same uniform principal contract as the JWT path. -->
+  <AssignVariable><Name>gw.principal</Name><Ref>verifyapikey.VA-VerifyKey.client_id</Ref><Value>unknown</Value></AssignVariable>
+  <AssignVariable><Name>gw.tier</Name><Ref>verifyapikey.VA-VerifyKey.app.tier</Ref><Value>default</Value></AssignVariable>
+  <AssignVariable><Name>gw.auth_method</Name><Value>apigee-apikey</Value></AssignVariable>
+  <AssignVariable><Name>gw.issuer</Name><Value>apigee</Value></AssignVariable>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</AssignMessage>
