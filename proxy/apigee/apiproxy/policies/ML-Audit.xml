@@ -14,6 +14,8 @@
       "model": "{claude.usage.model}",
       "input_tokens": "{claude.usage.input_tokens}",
       "output_tokens": "{claude.usage.output_tokens}",
+      "cache_creation_tokens": "{claude.usage.cache_creation_input_tokens}",
+      "cache_read_tokens": "{claude.usage.cache_read_input_tokens}",
       "status": "{response.status.code}",
       "path": "{proxy.pathsuffix}"
     }</Message>

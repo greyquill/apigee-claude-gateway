@@ -1,9 +1,11 @@
 <ExtractVariables name="EV-ReqModel">
-  <DisplayName>Extract requested model</DisplayName>
-  <!-- Pull the model id from the request body so the gateway can enforce an allow-list. -->
+  <DisplayName>Extract requested model and stream flag</DisplayName>
+  <!-- Pull the model id (for the allow-list) and the stream flag (for the streaming guard)
+       from the request body. -->
   <Source>request</Source>
   <JSONPayload>
     <Variable name="model"><JSONPath>$.model</JSONPath></Variable>
+    <Variable name="stream"><JSONPath>$.stream</JSONPath></Variable>
   </JSONPayload>
   <VariablePrefix>gw</VariablePrefix>
   <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>

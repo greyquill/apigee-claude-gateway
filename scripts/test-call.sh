@@ -24,6 +24,13 @@ if [[ -n "${IDP_JWT:-}" ]]; then
     -H "Authorization: Bearer ${IDP_JWT}" -H "Content-Type: application/json" -d "$BODY"; echo
 fi
 
+if [[ -n "${APP_KEY:-}" ]]; then
+  echo "==> Streaming rejected (expect 400, metering stays exact):"
+  STREAM_BODY="{\"model\":\"${MODEL}\",\"max_tokens\":16,\"stream\":true,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"
+  curl -sS -o /dev/null -w "HTTP %{http_code}\n" -X POST "https://${GATEWAY_HOST}/claude/v1/messages" \
+    -H "x-app-key: ${APP_KEY}" -H "Content-Type: application/json" -d "$STREAM_BODY"
+fi
+
 echo "==> No credential (expect 401, backend never hit):"
 curl -sS -o /dev/null -w "HTTP %{http_code}\n" -X POST "https://${GATEWAY_HOST}/claude/v1/messages" \
   -H "Content-Type: application/json" -d "$BODY"

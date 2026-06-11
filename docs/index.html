@@ -106,7 +106,7 @@
           <ol class="pol">
             <li>If Bearer: <b>EV-BearerToken</b> then <b>VJ-VerifyIdpToken</b>. Else: <b>VA-VerifyKey</b>.</li>
             <li><b>AM-PrincipalFrom{Jwt,Key}</b>: one uniform <code>gw.principal</code></li>
-            <li><b>EV-ReqModel</b> + <b>RF-ModelNotAllowed</b>: model allow-list (403 if blocked)</li>
+            <li><b>EV-ReqModel</b> (model + stream), then <b>RF-StreamingNotAllowed</b> (400 if stream) and <b>RF-ModelNotAllowed</b> (403 if off allow-list)</li>
             <li><b>SA-SmoothBurst</b>, <b>QU-PerAppDaily</b>, <b>AM-SetTarget</b></li>
           </ol></div>
         <div class="arrow">&#9660; &nbsp;backend leg (key injected, hidden from user)</div>
@@ -139,16 +139,17 @@
         <tr><td><code>VJ-VerifyIdpToken</code></td><td>VerifyJWT</td><td>Validate customer-IdP JWT (RS256, JWKS, iss/aud/exp). Option C.</td></tr>
         <tr><td><code>VA-VerifyKey</code></td><td>VerifyAPIKey</td><td>Validate Apigee API key, load app/tier context. Option A.</td></tr>
         <tr><td><code>AM-PrincipalFrom{Jwt,Key}</code></td><td>AssignMessage</td><td>Resolve uniform <code>gw.principal</code>, <code>tier</code>, <code>auth_method</code>.</td></tr>
-        <tr><td><code>EV-ReqModel</code></td><td>ExtractVariables</td><td>Pull the requested <code>model</code> from the request body.</td></tr>
+        <tr><td><code>EV-ReqModel</code></td><td>ExtractVariables</td><td>Pull the requested <code>model</code> and <code>stream</code> flag from the request body.</td></tr>
+        <tr><td><code>RF-StreamingNotAllowed</code></td><td>RaiseFault</td><td>Reject (400) <code>stream:true</code>, so token metering stays exact.</td></tr>
         <tr><td><code>RF-ModelNotAllowed</code></td><td>RaiseFault</td><td>Reject (403) a model not on the gateway allow-list.</td></tr>
         <tr><td><code>SA-SmoothBurst</code></td><td>SpikeArrest</td><td>Smooth bursts to protect the backend.</td></tr>
         <tr><td><code>QU-PerAppDaily</code></td><td>Quota</td><td>Per-principal daily budget, 429 when exceeded.</td></tr>
         <tr><td><code>AM-SetTarget</code></td><td>AssignMessage</td><td>Backend path + <code>X-Request-Id</code> correlation id.</td></tr>
         <tr><td><code>KVM-GetAnthropicKey</code></td><td>KeyValueMapOperations</td><td>Read Anthropic key from an <b>encrypted</b> KVM.</td></tr>
         <tr><td><code>AM-InjectBackendAuth</code></td><td>AssignMessage</td><td>Inject <code>x-api-key</code> on backend leg, strip user credential.</td></tr>
-        <tr><td><code>EV-Usage</code></td><td>ExtractVariables</td><td>Pull token counts + model from the response.</td></tr>
+        <tr><td><code>EV-Usage</code></td><td>ExtractVariables</td><td>Pull token counts (input, output, and cache tokens) + model from the response.</td></tr>
         <tr><td><code>AM-Scrub</code></td><td>AssignMessage</td><td>Strip backend/debug headers before returning.</td></tr>
-        <tr><td><code>SC-Tokens</code></td><td>StatisticsCollector</td><td>Record tokens, principal, auth method, tier into Analytics.</td></tr>
+        <tr><td><code>SC-Tokens</code></td><td>StatisticsCollector</td><td>Record tokens (incl. cache), HTTP status, principal, auth method, tier into Analytics.</td></tr>
         <tr><td><code>ML-Audit</code></td><td>MessageLogging</td><td>Structured audit line to Cloud Logging, then BigQuery/SIEM.</td></tr>
         <tr><td><code>RF-AuthError</code></td><td>RaiseFault</td><td>Clean 401 JSON on any auth failure (DefaultFaultRule).</td></tr>
       </table>
@@ -177,7 +178,7 @@
         <ul class="tight">
           <li><b>NFR1 Security:</b> no Google login in user path, secrets only encrypted, client credential never forwarded upstream.</li>
           <li><b>NFR2 Observability:</b> every allow/deny/quota/cost decision queryable.</li>
-          <li><b>NFR3 Portability:</b> backend target is a config swap, not a rewrite.</li>
+          <li><b>NFR3 Portability:</b> swap freely among Anthropic-schema endpoints by config. Vertex AI and Bedrock are adapters, not a pure config swap (path, auth, and version differ), so the target leg is re-skinned, not rewritten wholesale.</li>
           <li><b>NFR4 Repeatability:</b> bundle deploys from repo via script, demo reproducible.</li>
           <li><b>NFR5 Cost control:</b> eval tier, low token caps, model allow-list, no surprise spend.</li>
         </ul>
@@ -211,6 +212,7 @@
         <li>Valid non-Google credential, then 200 plus a real Claude answer.</li>
         <li>Invalid or missing credential, then 401, backend never called.</li>
         <li>Model not on the allow-list, then 403.</li>
+        <li>Streaming request (<code>stream:true</code>), then 400.</li>
         <li>Quota exceeded, then 429.</li>
         <li>Anthropic key absent from all user-visible output and logs.</li>
         <li>Audit plus usage record visible in Apigee Analytics and the external sink.</li>
@@ -264,7 +266,7 @@
         <tr>
           <td><b>Where Claude runs (data residency)</b></td>
           <td>Anthropic API direct, Claude on Vertex AI, or Claude on Bedrock.</td>
-          <td><span class="badge b-done">Anthropic API direct</span>; Vertex or Bedrock is a config swap if you need in-cloud residency.</td>
+          <td><span class="badge b-done">Anthropic API direct</span>; Vertex AI or Bedrock available as an adapter (different path, auth, and version) if you need in-cloud residency.</td>
         </tr>
         <tr>
           <td><b>Isolation model</b></td>

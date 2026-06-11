@@ -37,8 +37,11 @@ that demonstrates the mechanism.
 - **NFR1 Security:** no Google login in the end-user path; secrets only in encrypted storage;
   least-privilege backend identity; client credential never forwarded upstream.
 - **NFR2 Observability:** every governed decision (allow/deny/quota/cost) is queryable.
-- **NFR3 Portability:** backend target (Anthropic direct / Vertex / Bedrock) is a config swap,
-  not a rewrite.
+- **NFR3 Portability:** the target can swap among Anthropic-schema-compatible endpoints by
+  config. Vertex AI and Bedrock are **adapters, not a config swap**: Vertex moves the model into
+  the URL path, uses a GCP service-account bearer instead of `x-api-key`, and carries
+  `anthropic_version` in the body; Bedrock needs SigV4 signing (a JS/Java callout, no native
+  policy) and different model IDs. The gateway shape stays, the target leg is re-skinned.
 - **NFR4 Repeatability:** the proxy bundle deploys from this repo via a script; the demo is
   reproducible from a clean environment.
 - **NFR5 Cost control:** PoC stays on free/low-cost tiers; no surprise spend. (Vector hard rule:

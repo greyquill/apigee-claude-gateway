@@ -75,9 +75,10 @@ Request PreFlow (in order):
    - *or* **ExtractVariables** (`EV-BearerToken`) then **VerifyJWT** (`VJ-VerifyIdpToken`):
      option C. `EV-BearerToken` strips the `Bearer ` prefix into `jwtsrc.token`, then VerifyJWT
      validates the signature against the customer IdP's JWKS and checks `iss`/`aud`/`exp`.
-2. **ExtractVariables** (`EV-ReqModel`) plus **RaiseFault** (`RF-ModelNotAllowed`): pull the
-   requested `model` from the body and reject (403) anything not on the gateway allow-list. A
-   governance control that caps cost and surface area.
+2. **ExtractVariables** (`EV-ReqModel`) reads `model` and `stream` from the body. Then
+   **RaiseFault** (`RF-StreamingNotAllowed`) returns 400 when `stream` is true, and **RaiseFault**
+   (`RF-ModelNotAllowed`) returns 403 for any model not on the allow-list. Governance controls
+   that keep metering exact and cap cost and surface area.
 3. **SpikeArrest** (`SA-SmoothBurst`): smooths bursts to protect the backend.
 4. **Quota** (`QU-PerAppDaily`): e.g. `1000` calls/day, keyed on the principal, the consumption
    budget that makes "usage" enforceable.
@@ -107,8 +108,10 @@ FaultRules:
 ---
 
 ## 4. Secret handling (the crux)
-- Anthropic key stored once in an **encrypted KVM** scoped to the environment, or in
-  GCP Secret Manager fetched via ServiceCallout. Operators rotate it in one place.
+- Anthropic key stored once in an **encrypted KVM** scoped to the environment. Operators rotate
+  it in one place. GCP Secret Manager via ServiceCallout is possible but **not equivalent**: it
+  adds a network hop of latency per request and a new failure mode, so encrypted KVM is the right
+  PoC default and Secret Manager is an opt-in for orgs that mandate it.
 - Key injected **only** on the target (backend) leg; **never** logged, **never** echoed,
   **never** present in any response or analytics field.
 - End-user credentials and the backend credential are fully decoupled: revoking a user's API
@@ -116,30 +119,48 @@ FaultRules:
 
 ---
 
-## 5. Streaming note
-Claude supports SSE streaming (`stream: true`). Apigee can proxy SSE, but token-counting and
-some response policies behave differently on a streamed body. **PoC scope:** start with
-non-streaming (`stream: false`) so usage metering is exact; note streaming as a follow-up.
+## 5. Streaming (scoped out and enforced)
+Claude supports SSE streaming (`stream: true`), but a streamed body has no single `usage` block,
+so metering and cost would silently record zero. The PoC scopes to non-streaming, and this is
+**enforced, not just declared**: `EV-ReqModel` reads `stream` from the body and
+`RF-StreamingNotAllowed` returns a 400 when it is `true`. Streaming with accurate metering (sum
+the `message_delta` usage events) is a follow-up.
 
 ---
 
 ## 6. What the demo shows (acceptance)
 1. A call with a valid non-Google credential → 200 + real Claude answer.
 2. A call with a missing/invalid credential → 401, no backend hit.
-3. Exceeding the quota → 429.
-4. The Anthropic key appears **nowhere** in the response or logs visible to the user.
-5. An **audit record** in Apigee Analytics (and the BigQuery/SIEM sink) showing app, request id,
-   model, token counts, status, timestamp for each call.
+3. A request for a model off the allow-list → 403; a `stream:true` request → 400.
+4. Exceeding the quota → 429.
+5. The Anthropic key appears **nowhere** in the response or logs visible to the user.
+6. An **audit record** in Apigee Analytics (and the BigQuery/SIEM sink) showing principal,
+   request id, model, token counts (including cache tokens), status, timestamp for each call.
+
+## 6a. Known limits (honest, for the architect)
+- **Usage on errors:** `EV-Usage` only finds a `usage` block on a 2xx body. On 4xx/5xx the token
+  fields stay unresolved and `SC-Tokens` records 0, which is why the audit also logs the HTTP
+  status so zero-token rows are distinguishable from real ones.
+- **Quota counts on policy execution, not backend success:** a request that reaches the backend
+  and gets a 502 still consumes quota. Acceptable for the PoC; for production move accounting to
+  a post-success step or refund on 5xx.
+- **No request-size guard:** SpikeArrest caps rate, not bytes, and LLM payloads are large. A
+  content-length check is a worthwhile production add.
 
 ---
 
-## 7. Backend decision gate (resolve at 4pm)
-Where does "Claude" live? It changes the target endpoint and the backend auth:
-- **Anthropic API direct** (`api.anthropic.com`): simplest; backend auth = `x-api-key`. No Google at all.
-- **Claude on Vertex AI**: backend auth = GCP service-account token (a Google identity, but a
-  *service* identity inside Apigee, still invisible to the end-user). Strongest "it's on Google
-  Cloud" story for the Apigee/Google audience.
-- **Claude on AWS Bedrock**: backend auth = SigV4. Cross-cloud story.
+## 7. Backend decision (decided: Anthropic direct, others as adapters)
+Where "Claude" lives changes the target endpoint and the backend auth. These are **adapters, not
+a pure config swap**:
+- **Anthropic API direct** (`api.anthropic.com`): simplest; backend auth = `x-api-key`, model in
+  the body. No Google at all. **This is the PoC default.**
+- **Claude on Vertex AI**: model moves into the URL path, backend auth = GCP service-account
+  bearer (a Google *service* identity inside Apigee, still invisible to the end-user),
+  `anthropic_version` becomes a body field (`vertex-2023-10-16`). Note this breaks the
+  body-based `EV-ReqModel` allow-list, which must be re-pointed at the path. Strongest "it runs
+  on Google Cloud" story for the Apigee/Google audience.
+- **Claude on AWS Bedrock**: SigV4 signing (no native Apigee policy, needs a JS/Java callout or a
+  hosted target), different model IDs, the `InvokeModel` path. Cross-cloud story.
 
-**Recommendation:** PoC on **Anthropic API direct** for speed, and design the target endpoint so
-swapping to **Vertex** is a config change (it is the most compelling narrative for a Google audience).
+**Decision:** PoC on **Anthropic API direct** for speed. The gateway shape (auth, governance,
+audit) is unchanged for the other backends; only the target leg is re-skinned.

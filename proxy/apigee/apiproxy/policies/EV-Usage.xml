@@ -1,9 +1,14 @@
 <ExtractVariables name="EV-Usage">
   <DisplayName>Extract token usage from Claude response</DisplayName>
   <Source>response</Source>
+  <!-- Capture cache token fields too: with prompt caching, real cost also lives in
+       cache_creation_input_tokens / cache_read_input_tokens. On error responses (4xx/5xx) there
+       is no usage block, so these stay unresolved and downstream defaults to 0. -->
   <JSONPayload>
     <Variable name="usage.input_tokens"><JSONPath>$.usage.input_tokens</JSONPath></Variable>
     <Variable name="usage.output_tokens"><JSONPath>$.usage.output_tokens</JSONPath></Variable>
+    <Variable name="usage.cache_creation_input_tokens"><JSONPath>$.usage.cache_creation_input_tokens</JSONPath></Variable>
+    <Variable name="usage.cache_read_input_tokens"><JSONPath>$.usage.cache_read_input_tokens</JSONPath></Variable>
     <Variable name="usage.model"><JSONPath>$.model</JSONPath></Variable>
   </JSONPayload>
   <VariablePrefix>claude</VariablePrefix>

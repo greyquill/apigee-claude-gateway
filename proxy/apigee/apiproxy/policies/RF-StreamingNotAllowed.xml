@@ -1,0 +1,13 @@
+<RaiseFault name="RF-StreamingNotAllowed">
+  <DisplayName>Reject streaming requests</DisplayName>
+  <!-- The PoC scopes to non-streaming so token metering and audit are exact. Without this guard
+       a stream:true request would yield an SSE body with no usage block, and metering/cost would
+       silently record zero. Reject explicitly instead. -->
+  <FaultResponse>
+    <Set>
+      <StatusCode>400</StatusCode>
+      <ReasonPhrase>Bad Request</ReasonPhrase>
+      <Payload contentType="application/json">{"error":{"type":"streaming_unsupported","message":"Streaming (stream:true) is not supported by this gateway. Token metering and audit require non-streaming responses. Resend with stream:false or omit the field."}}</Payload>
+    </Set>
+  </FaultResponse>
+</RaiseFault>

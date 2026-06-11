@@ -3,6 +3,9 @@
   <Statistics>
     <Statistic name="input_tokens" ref="claude.usage.input_tokens" type="integer">0</Statistic>
     <Statistic name="output_tokens" ref="claude.usage.output_tokens" type="integer">0</Statistic>
+    <Statistic name="cache_creation_tokens" ref="claude.usage.cache_creation_input_tokens" type="integer">0</Statistic>
+    <Statistic name="cache_read_tokens" ref="claude.usage.cache_read_input_tokens" type="integer">0</Statistic>
+    <Statistic name="status" ref="response.status.code" type="integer">0</Statistic>
     <Statistic name="model" ref="claude.usage.model" type="string">unknown</Statistic>
     <Statistic name="principal" ref="gw.principal" type="string">unknown</Statistic>
     <Statistic name="auth_method" ref="gw.auth_method" type="string">unknown</Statistic>

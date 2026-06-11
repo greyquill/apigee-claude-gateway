@@ -6,8 +6,10 @@ Lightweight records. One entry per decision: context, decision, status.
 These were open at the start and are now decided. Each is a default, configurable by the
 adopting client (see the "For adopters" tab on the explainer page).
 1. **Backend Claude surface**: **Anthropic API direct** for the PoC (simplest, zero Google in
-   the path). Target endpoint designed so **Vertex AI** or **Bedrock** is a config swap for
-   clients who need in-cloud data residency.
+   the path). **Vertex AI** and **Bedrock** are supported as **adapters, not a pure config swap**:
+   Vertex moves the model into the URL path, swaps `x-api-key` for a GCP service-account bearer,
+   and carries `anthropic_version` in the body; Bedrock needs SigV4 signing (a JS/Java callout)
+   and different model IDs. The gateway shape is unchanged, the target leg is re-skinned.
 2. **End-user identity model**: support **both** non-Google methods. **Customer-IdP JWT (C)** is
    the lead for enterprise federation, **Apigee API key (A)** for simple apps. Apigee OAuth2 (B)
    stays optional.
@@ -35,6 +37,7 @@ adopting client (see the "For adopters" tab on the explainer page).
 
 ## ADR-0003: Backend target
 - **Context:** see decision 1. Choice of Claude backend gates the target endpoint and backend auth.
-- **Decision:** Anthropic API direct for the PoC. Target endpoint is structured so Vertex AI or
-  Bedrock is a config swap for clients needing in-cloud data residency.
+- **Decision:** Anthropic API direct for the PoC. Vertex AI and Bedrock are reachable as adapters
+  (different path, auth, and version), not a pure config swap, for clients needing in-cloud
+  data residency.
 - **Status:** accepted.

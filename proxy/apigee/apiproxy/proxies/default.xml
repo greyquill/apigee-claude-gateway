@@ -29,8 +29,12 @@
         <Name>AM-PrincipalFromKey</Name>
         <Condition>request.header.authorization = null</Condition>
       </Step>
-      <!-- Governance: only allow-listed Claude models pass. -->
+      <!-- Governance: enforce non-streaming, then the model allow-list. -->
       <Step><Name>EV-ReqModel</Name></Step>
+      <Step>
+        <Name>RF-StreamingNotAllowed</Name>
+        <Condition>gw.stream = "true"</Condition>
+      </Step>
       <Step>
         <Name>RF-ModelNotAllowed</Name>
         <Condition>(gw.model != "claude-opus-4-8") and (gw.model != "claude-sonnet-4-6") and (gw.model != "claude-haiku-4-5")</Condition>
