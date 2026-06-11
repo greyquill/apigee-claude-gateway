@@ -1,0 +1,11 @@
+<ExtractVariables name="EV-BearerToken">
+  <DisplayName>Extract raw bearer token (option C)</DisplayName>
+  <!-- Apigee VerifyJWT needs the token alone, not the "Bearer " prefix. Pull the raw token
+       out of the Authorization header into jwtsrc.token, which VJ-VerifyIdpToken then verifies. -->
+  <Source>request</Source>
+  <Header name="Authorization">
+    <Pattern ignoreCase="true">Bearer {token}</Pattern>
+  </Header>
+  <VariablePrefix>jwtsrc</VariablePrefix>
+  <IgnoreUnresolvedVariables>true</IgnoreUnresolvedVariables>
+</ExtractVariables>

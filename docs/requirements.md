@@ -17,7 +17,7 @@ that demonstrates the mechanism.
 - Production multi-tenant hardening, HA, DR.
 - Billing/chargeback integration (we capture usage; we do not invoice).
 - A customer-facing developer portal (Apigee provides one; not required for the demo).
-- Streaming (SSE) metering exactness — noted as a follow-up; PoC uses non-streaming.
+- Streaming (SSE) metering exactness: noted as a follow-up; PoC uses non-streaming.
 - Fine-tuning prompts/guardrails on Claude content (this is a gateway PoC, not an app).
 
 ## Functional requirements

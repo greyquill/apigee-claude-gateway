@@ -25,7 +25,7 @@ Claude response. The Anthropic credential never leaves Apigee. Every call is pol
                                                    ▼
                                           ┌──────────────────────┐
                                           │   Claude backend      │  Anthropic API direct
-                                          │  api.anthropic.com    │  (or Vertex AI / Bedrock — see decisions)
+                                          │  api.anthropic.com    │  (or Vertex AI / Bedrock: see decisions)
                                           └──────────────────────┘
                                                    │ PostFlow (response)
                                                    │  i. ExtractVariables: usage.input/output tokens
@@ -41,7 +41,7 @@ Claude response. The Anthropic credential never leaves Apigee. Every call is pol
 **Why no Google login:** end-user identity is established by an Apigee construct (API key,
 Apigee-minted OAuth2 token, or a JWT from the customer's own IdP). None of these touch Google
 Workspace or the Cloud Console. The only place a Google identity could appear is the *backend*
-leg if Claude is reached via Vertex AI — and that is a service identity inside Apigee, invisible
+leg if Claude is reached via Vertex AI: and that is a service identity inside Apigee, invisible
 to the end-user.
 
 ---
@@ -70,34 +70,38 @@ are identical regardless of auth method. Neither end-user credential is forwarde
 
 Request PreFlow (in order):
 
-1. **VerifyAPIKey** (`VA-VerifyKey`) — option A. Rejects unknown/revoked keys; loads the
+1. **VerifyAPIKey** (`VA-VerifyKey`): option A. Rejects unknown/revoked keys, loads the
    Developer App context (app name, developer, custom attrs like `tier`).
-   - *or* **VerifyJWT** (`VJ-VerifyIdpToken`) — option C, validates signature against the
-     customer IdP's JWKS, checks `iss`/`aud`/`exp`.
-2. **SpikeArrest** (`SA-SmoothBurst`) — e.g. `30pm` per processor, protects the backend from bursts.
-3. **Quota** (`QU-PerAppDaily`) — e.g. `1000` calls/day, keyed on the app/tier; the consumption
+   - *or* **ExtractVariables** (`EV-BearerToken`) then **VerifyJWT** (`VJ-VerifyIdpToken`):
+     option C. `EV-BearerToken` strips the `Bearer ` prefix into `jwtsrc.token`, then VerifyJWT
+     validates the signature against the customer IdP's JWKS and checks `iss`/`aud`/`exp`.
+2. **ExtractVariables** (`EV-ReqModel`) plus **RaiseFault** (`RF-ModelNotAllowed`): pull the
+   requested `model` from the body and reject (403) anything not on the gateway allow-list. A
+   governance control that caps cost and surface area.
+3. **SpikeArrest** (`SA-SmoothBurst`): smooths bursts to protect the backend.
+4. **Quota** (`QU-PerAppDaily`): e.g. `1000` calls/day, keyed on the principal, the consumption
    budget that makes "usage" enforceable.
-4. **AssignMessage** (`AM-SetTarget`) — set target path, content-type, and a correlation id
+5. **AssignMessage** (`AM-SetTarget`): set target path, content-type, and a correlation id
    (`X-Request-Id`) used in the audit record.
-5. **KeyValueMapOperations** (`KVM-GetAnthropicKey`) — read the Anthropic API key from an
+6. **KeyValueMapOperations** (`KVM-GetAnthropicKey`): read the Anthropic API key from an
    **encrypted KVM** (`secrets`), never hard-coded, never returned to the user.
-6. **AssignMessage** (`AM-InjectBackendAuth`) — set `x-api-key: {private.anthropic.key}` and
+7. **AssignMessage** (`AM-InjectBackendAuth`): set `x-api-key: {private.anthropic.key}` and
    `anthropic-version: 2023-06-01`; **remove** the client `Authorization` header so the
    end-user credential is not forwarded upstream.
 
 Response PostFlow (in order):
 
-7. **ExtractVariables** (`EV-Usage`) — pull `usage.input_tokens` / `usage.output_tokens` from
+7. **ExtractVariables** (`EV-Usage`): pull `usage.input_tokens` / `usage.output_tokens` from
    the Claude response JSON.
-8. **AssignMessage** (`AM-Scrub`) — strip any backend/debug headers before returning to user.
-9. **StatisticsCollector** (`SC-Tokens`) — record tokens (and a computed cost) into Apigee
-   Analytics custom dimensions, per app/developer.
-10. **MessageLogging** (`ML-Audit`) — emit a structured audit line (who, app, request id,
+8. **AssignMessage** (`AM-Scrub`): strip any backend/debug headers before returning to user.
+9. **StatisticsCollector** (`SC-Tokens`): record token counts, principal, auth method, and tier
+   into Apigee Analytics custom dimensions. Cost is derived downstream from the token counts.
+10. **MessageLogging** (`ML-Audit`): emit a structured audit line (who, app, request id,
     model, tokens, status, timestamp) to syslog/Cloud Logging → **BigQuery/SIEM** sink.
 
 FaultRules:
 
-11. **RaiseFault** mappings — clean 401 (bad/missing credential), 429 (quota or spike),
+11. **RaiseFault** mappings: clean 401 (bad/missing credential), 429 (quota or spike),
     502/504 (backend) responses, so failures are governed and legible too.
 
 ---
@@ -131,11 +135,11 @@ non-streaming (`stream: false`) so usage metering is exact; note streaming as a 
 
 ## 7. Backend decision gate (resolve at 4pm)
 Where does "Claude" live? It changes the target endpoint and the backend auth:
-- **Anthropic API direct** (`api.anthropic.com`) — simplest; backend auth = `x-api-key`. No Google at all.
-- **Claude on Vertex AI** — backend auth = GCP service-account token (a Google identity, but a
+- **Anthropic API direct** (`api.anthropic.com`): simplest; backend auth = `x-api-key`. No Google at all.
+- **Claude on Vertex AI**: backend auth = GCP service-account token (a Google identity, but a
   *service* identity inside Apigee, still invisible to the end-user). Strongest "it's on Google
   Cloud" story for the Apigee/Google audience.
-- **Claude on AWS Bedrock** — backend auth = SigV4. Cross-cloud story.
+- **Claude on AWS Bedrock**: backend auth = SigV4. Cross-cloud story.
 
 **Recommendation:** PoC on **Anthropic API direct** for speed, and design the target endpoint so
 swapping to **Vertex** is a config change (it is the most compelling narrative for a Google audience).

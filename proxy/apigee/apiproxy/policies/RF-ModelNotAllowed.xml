@@ -1,0 +1,12 @@
+<RaiseFault name="RF-ModelNotAllowed">
+  <DisplayName>Reject a model not on the allow-list</DisplayName>
+  <!-- Governance control: only permitted Claude models pass. Caps cost and surface area.
+       For production, move the allow-list to a KVM or property set instead of the proxy condition. -->
+  <FaultResponse>
+    <Set>
+      <StatusCode>403</StatusCode>
+      <ReasonPhrase>Forbidden</ReasonPhrase>
+      <Payload contentType="application/json">{"error":{"type":"model_not_allowed","message":"The requested model is not permitted by this gateway."}}</Payload>
+    </Set>
+  </FaultResponse>
+</RaiseFault>

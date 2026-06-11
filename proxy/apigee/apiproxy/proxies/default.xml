@@ -10,6 +10,10 @@
            customer-IdP JWT (option C); otherwise expect an Apigee API key (option A).
            Either way: no Google login in the end-user path. -->
       <Step>
+        <Name>EV-BearerToken</Name>
+        <Condition>request.header.authorization != null</Condition>
+      </Step>
+      <Step>
         <Name>VJ-VerifyIdpToken</Name>
         <Condition>request.header.authorization != null</Condition>
       </Step>
@@ -24,6 +28,12 @@
       <Step>
         <Name>AM-PrincipalFromKey</Name>
         <Condition>request.header.authorization = null</Condition>
+      </Step>
+      <!-- Governance: only allow-listed Claude models pass. -->
+      <Step><Name>EV-ReqModel</Name></Step>
+      <Step>
+        <Name>RF-ModelNotAllowed</Name>
+        <Condition>(gw.model != "claude-opus-4-8") and (gw.model != "claude-sonnet-4-6") and (gw.model != "claude-haiku-4-5")</Condition>
       </Step>
       <Step><Name>SA-SmoothBurst</Name></Step>
       <Step><Name>QU-PerAppDaily</Name></Step>

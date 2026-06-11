@@ -16,10 +16,10 @@ audit record for every call.
 ## What this repo holds
 | Path | What |
 |---|---|
-| `docs/index.html` | **Visual explainer** (tabbed: Architecture incl. cloud diagram, Requirements, Status &amp; Deployment, Open questions). Hosted on GitHub Pages — see below. |
+| `docs/index.html` | **Visual explainer** (tabbed: Architecture incl. cloud diagram, Requirements, Status &amp; Deployment, Open questions). Hosted on GitHub Pages: see below. |
 | `docs/poc-architecture.md` | **The one-page PoC architecture** (proxy flow + the specific Apigee policies). Start here. |
 | `docs/requirements.md` | Functional + non-functional requirements, scope, and success criteria. |
-| `docs/decisions.md` | Decision log (ADRs). Open questions to resolve at the 4pm. |
+| `docs/decisions.md` | Decision log (ADRs) and the open questions. |
 | `proxy/apigee/` | Apigee proxy bundle: policies + proxy/target endpoint config (the deployable artifact). |
 | `scripts/` | Helper scripts to deploy the bundle and exercise the call path. |
 | `CONTRIBUTING.md` | How to work in this repo (conventions, the hard rules). |

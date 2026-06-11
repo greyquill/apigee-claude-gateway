@@ -5,7 +5,8 @@
        'idp' property set (proxy/apigee/apiproxy/resources/properties/idp.properties) so the
        same bundle points at any customer IdP by config, not code. -->
   <Algorithm>RS256</Algorithm>
-  <Source>request.header.authorization.bearer</Source>
+  <!-- jwtsrc.token is the raw token extracted by EV-BearerToken (Bearer prefix stripped). -->
+  <Source>jwtsrc.token</Source>
   <PublicKey>
     <JWKS uri="{propertyset.idp.jwks_uri}"/>
   </PublicKey>
