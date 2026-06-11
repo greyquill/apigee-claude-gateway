@@ -1,18 +1,24 @@
-# Decision log (ADRs) + open questions
+# Decision log (ADRs)
 
 Lightweight records. One entry per decision: context, decision, status.
 
-## Open questions
-1. **Backend Claude surface**: Anthropic API direct vs. Claude on Vertex AI vs. Claude on
-   AWS Bedrock? Gates target endpoint + backend auth. (Leaning: Anthropic direct for PoC speed,
-   designed so Vertex is a config swap.)
-2. **End-user identity model**: Apigee API key (A) / Apigee OAuth2 (B) / customer-IdP JWT (C)?
-   (Leaning: A first, then C to prove non-Google federation.)
-3. **Audit depth**: metadata only, or capture prompt/response bodies too? Where does the sink
-   live (BigQuery, customer SIEM)? Any PII/data-residency constraints?
-4. **Cost attribution**: per-app, per-end-user, or per-tier? Drives the analytics dimensions.
-5. **Streaming**: is SSE required for the demo, or is non-streaming acceptable for v1?
-6. **Tenancy**: single shared proxy or per-customer proxy/environment?
+## Decisions (PoC defaults)
+These were open at the start and are now decided. Each is a default, configurable by the
+adopting client (see the "For adopters" tab on the explainer page).
+1. **Backend Claude surface**: **Anthropic API direct** for the PoC (simplest, zero Google in
+   the path). Target endpoint designed so **Vertex AI** or **Bedrock** is a config swap for
+   clients who need in-cloud data residency.
+2. **End-user identity model**: support **both** non-Google methods. **Customer-IdP JWT (C)** is
+   the lead for enterprise federation, **Apigee API key (A)** for simple apps. Apigee OAuth2 (B)
+   stays optional.
+3. **Audit depth**: **metadata only** by default (identity, request id, model, token counts,
+   status, time), bodies off for privacy and switchable on. Sink: **Apigee Analytics + Cloud
+   Logging to BigQuery**, customer SIEM optional.
+4. **Cost attribution**: **per principal** (per end user for JWT, per app for API key),
+   aggregable to team/tier.
+5. **Streaming**: **non-streaming** for v1 so token metering is exact; SSE on the roadmap.
+6. **Tenancy**: **single shared proxy** with per-app and per-IdP isolation for the PoC;
+   dedicated environment per business unit available for production.
 
 ## ADR-0001: Apigee as the single front door
 - **Context:** customers want Claude access governed without exposing the Anthropic key or
@@ -27,7 +33,8 @@ Lightweight records. One entry per decision: context, decision, status.
   JWT). Any Google identity exists only as a hidden backend service identity (if Vertex is chosen).
 - **Status:** accepted.
 
-## ADR-0003: Backend target (PENDING)
-- **Context:** see open question 1.
-- **Decision:** TBD.
-- **Status:** proposed: Anthropic API direct for PoC, Vertex as the swap-in narrative.
+## ADR-0003: Backend target
+- **Context:** see decision 1. Choice of Claude backend gates the target endpoint and backend auth.
+- **Decision:** Anthropic API direct for the PoC. Target endpoint is structured so Vertex AI or
+  Bedrock is a config swap for clients needing in-cloud data residency.
+- **Status:** accepted.
